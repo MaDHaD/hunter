@@ -104,7 +104,7 @@ var game = {
         //setInterval(function(){ console.log('player x: ' + player.x); console.log('player y: ' + player.y) }, 5000);
 
         stage.update();
-        Ticker.setFPS(52);
+        Ticker.setFPS(64);
 
         //watch on events
         window.addEventListener("keydown", function (e) {
