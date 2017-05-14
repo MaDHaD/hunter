@@ -7,19 +7,19 @@ var Ticker = createjs.Ticker;
 var Stage = createjs.Stage;
 
 var stage;
-var player,
-    cat = [],
-    river,
+var cat = [],
     grechka;
 
-var speed = 5,
-    keys = [];
+var animationSpeed = 0.3,
+    speed = 5,
+    keys = [],
+    eventListener = 0;
 
 var catCountToSpawn = 5;
 
 //item radius
 var bonusItemsRadius = 5;
-var playerRadius = 10;
+var playerRadius = 20;
 var catRadius = 7;
 var riverRadius = 30;
 
@@ -30,56 +30,97 @@ var droppedCats = 0;
 var bounds;
 var game = {
     init: function () {
+        //Building canvas bord
         var wrapper = document.getElementById("canvasWrapper");
         var canvas = document.getElementById("stageCanvas");
 
         bounds = new Rectangle();
         bounds.width = canvas.width;
         bounds.height = canvas.height;
+
+        //creating empty stage
         stage = new Stage(canvas);
 
         /**
          * Player setup
          */
-        var playerGraphics= new Graphics();
-        playerGraphics.setStrokeStyle(1);
-        playerGraphics.beginStroke(Graphics.getRGB(0, 0, 0, .7));
-        playerGraphics.drawCircle(10, 10, playerRadius);
-
-        player = new Shape(playerGraphics);
-        player.x = 10;
-        player.y = canvas.height / 2;
-        player.radius = playerRadius;
-        stage.addChild(player);
+        var playerSheet =  new createjs.SpriteSheet({
+            frames: {
+                width:64,
+                height:64,
+                count:35,
+                regX: 0,
+                regY: 0,
+                spacing:0,
+                margin:0
+            },
+            "animations": {
+                "idle": [19, 19, false, 2],
+                "moveRight": [27, 35, "moveRight", animationSpeed],
+                "moveLeft": [9, 17, "moveLeft", animationSpeed],
+                "moveDown": [0, 8, "moveDown", animationSpeed],
+                "moveUp": [18, 26, "moveUp", animationSpeed]
+            },
+            "images": ["/app/img/test.png"]
+        });
+        //Preparing and spawning default player position
+        var playerAnimations = new createjs.Sprite(playerSheet, "idle");
+        playerAnimations.x = 0;
+        playerAnimations.y = 0;
+        playerAnimations.radius = playerRadius;
+        stage.addChild(playerAnimations);
 
         /**
-         * River setup
+         * River/Well setup
          */
-        var riverGraphics= new Graphics();
-        riverGraphics.setStrokeStyle(3);
-        riverGraphics.beginStroke('#000');
-        riverGraphics.beginFill("#004eba");
-        riverGraphics.drawCircle(10, 10, riverRadius);
-
-        river = new Shape(riverGraphics);
-        river.x = 700;
-        river.y = 700;
-        river.radius = riverRadius;
-        stage.addChild(river);
+        var wellSheet =  new createjs.SpriteSheet({
+            frames: {
+                width:150,
+                height:150,
+                count:1,
+                regX: 0,
+                regY: 0,
+                spacing:0,
+                margin:0
+            },
+            "images": ["/app/img/well.png"]
+        });
+        //Spawn well
+        var well = new createjs.Sprite(wellSheet);
+        well.x = 600;
+        well.y = 600;
+        well.radius = riverRadius;
+        stage.addChild(well);
 
         /**
          * Cat setup
          */
-        var catGraphics = new Graphics();
-        catGraphics.setStrokeStyle(1);
-        catGraphics.beginStroke("#000000");
-        catGraphics.beginFill("black");
-        catGraphics.drawCircle(0, 0, catRadius);
+        var catSheet =  new createjs.SpriteSheet({
+            frames: {
+                width:20,
+                height:20,
+                count:8,
+                regX: 0,
+                regY: 0,
+                spacing:0,
+                margin:0
+            },
+            "animations": {
+                "idle": [0, 7, true, 0.2]
+                //"moveRight": [28, 36, "moveRight", animationSpeed],
+                //"moveLeft": [10, 18, "moveLeft", animationSpeed],
+                //"moveDown": [0, 9, "moveDown", animationSpeed],
+                //"moveUp": [19, 27, "moveUp", animationSpeed]
+            },
+            "images": ["/app/img/cat.png"]
+        });
 
+        //Spawn bonusStage items
         for(var i =0; i<catCountToSpawn; i++) {
-            cat[i] = new Shape(catGraphics);
+            cat[i] = new createjs.Sprite(catSheet, "idle");
             cat[i].x = randomInteger(20, 750);
             cat[i].y = randomInteger(20, 750);
+            cat[i].radius = catRadius;
             stage.addChild(cat[i]);
         }
 
@@ -93,7 +134,7 @@ var game = {
         randBonusItem.drawCircle(5, 5, bonusItemsRadius);
         grechka = new Shape(randBonusItem);
 
-        //random grechka spawner
+        //random bonus item spawner
         setInterval(function () {
             grechka.x = randomInteger(20, 750);
             grechka.y = randomInteger(20, 750);
@@ -101,89 +142,95 @@ var game = {
             stage.addChild(grechka);
         },10000);
 
-        //setInterval(function(){ console.log('player x: ' + player.x); console.log('player y: ' + player.y) }, 5000);
-
-        stage.update();
-        Ticker.setFPS(64);
-
-        //watch on events
+        //First updating stage and start listening events
         window.addEventListener("keydown", function (e) {
-            keys[e.keyCode] = true;
+            this.keys[e.keyCode] = true;
+            if(!eventListener) {
+                runKeyEvent(playerAnimations);
+            }
         });
         window.addEventListener("keyup", function (e) {
-            keys[e.keyCode] = false;
+            this.keys[e.keyCode] = false;
+            playerAnimations.gotoAndStop("idle");
+            eventListener = 0;
         });
-        Ticker.addEventListener("tick", this.update);
-    },
-    update: function () {
-        //check collision on bonusItem
-        if(isCollide(player, grechka)) {
-            if(stage.removeChild(grechka)) {
-                eatedGrechka++;
-                var div = document.getElementById('eatedGrechka');
-                div.innerHTML = eatedGrechka;
-                speed = 10;
-                setTimeout(function(){ speed = 5 }, 3000);
+
+        //first update, setts fps, start tick
+        stage.update();
+        Ticker.setFPS(64);
+        Ticker.addEventListener("tick", handleTick);
+
+        function handleTick(e) {
+            //move frame regarding user key press
+            if (keys[38]) {
+                playerAnimations.y -= speed;
             }
-        }
+            if (keys[40]) {
+                playerAnimations.y += speed;
+            }
+            if (keys[39]) {
+                playerAnimations.x += speed;
+            }
+            if (keys[37]) {
+                playerAnimations.x -= speed;
+            }
 
-        cat.forEach(function (kitty) {
-
-            if (
-                ((player.x + 10) >= kitty.x) &&
-                ((player.x - 10) <= kitty.x) &&
-                ((player.y + 10) >= kitty.y) &&
-                ((player.y - 10) <= kitty.y)
-            ) {
-                kitty.x = player.x;
-                kitty.y = player.y;
-
-                if(!( player.x >= river.x + riverRadius*2
-                    || player.x + playerRadius*4 <= river.x
-                    || player.y >= river.y + riverRadius*2
-                    || player.y + playerRadius*4 <= river.y )) {
-                    if(stage.removeChild(kitty)) {
-                        droppedCats++;
-                        var div = document.getElementById('droppedCats');
-                        div.innerHTML = droppedCats;
-                    }
+            //check collide in bonus item
+            if(isCollide(playerAnimations, grechka)) {
+                if(stage.removeChild(grechka)) {
+                    eatedGrechka++;
+                    var div = document.getElementById('eatedGrechka');
+                    div.innerHTML = eatedGrechka;
+                    speed = 10;
+                    animationSpeed = 1;
+                    setTimeout(function(){ speed = 5; animationSpeed = 0.3 }, 3000);
                 }
             }
-        });
 
-        //check player moves
-        if (keys[38]) {
-            if (player.y >= (playerRadius / 2)) {
-                player.y -= speed;
-            }
-        }
-        if (keys[40]) {
-            if (player.y < (bounds.height - playerRadius * 2)) {
-                player.y += speed;
-            }
-        }
-        if (keys[39]) {
-            if (player.x < (bounds.width - playerRadius * 2)) {
-                player.x += speed;
-            }
-        }
-        if (keys[37]) {
-            if (player.x >= (playerRadius / 2)) {
-                player.x -= speed;
-            }
-        }
+            //Check collide in bonusStage item
+            cat.forEach(function (kitty) {
+                if (
+                    ((playerAnimations.x + 10) >= kitty.x) &&
+                    ((playerAnimations.x - 10) <= kitty.x) &&
+                    ((playerAnimations.y + 10) >= kitty.y) &&
+                    ((playerAnimations.y - 10) <= kitty.y)
+                ) {
+                    kitty.x = playerAnimations.x;
+                    kitty.y = playerAnimations.y;
 
-        stage.update();
+                    if(!( playerAnimations.x >= well.x + riverRadius*2
+                        || playerAnimations.x + playerRadius*4 <= well.x
+                        || playerAnimations.y >= well.y + riverRadius*2
+                        || playerAnimations.y + playerRadius*4 <= well.y )) {
+                        if(stage.removeChild(kitty)) {
+                            droppedCats++;
+                            var div = document.getElementById('droppedCats');
+                            div.innerHTML = droppedCats;
+                        }
+                    }
+                }
+            });
+
+            stage.update();
+        }
     }
 };
 
-
+//return correct int regarding min/max
 function randomInteger(min, max) {
-    var rand = min - 0.5 + Math.random() * (max - min + 1)
+    var rand = min - 0.5 + Math.random() * (max - min + 1);
     rand = Math.round(rand);
     return rand;
 }
 
+/**
+ *
+ * Check collide on some item
+ *
+ * @param player (should contains "x,y,radius" )
+ * @param item (should contains "x,y,radius" )
+ * @returns {boolean}
+ */
 function isCollide(player, item) {
     return !(
         ((player.y + player.radius) <= (item.y)) ||
@@ -191,4 +238,24 @@ function isCollide(player, item) {
         ((player.x + player.radius) <= item.x) ||
         (player.x >= (item.x + item.radius))
     );
+}
+
+/**
+ * Start animation in playerSprite regarding user key pressed
+ * @param playerAnimations
+ */
+function runKeyEvent(playerAnimations) {
+    if (keys[38]) {
+        playerAnimations.gotoAndPlay("moveDown");
+    }
+    if (keys[40]) {
+        playerAnimations.gotoAndPlay("moveUp");
+    }
+    if (keys[39]) {
+        playerAnimations.gotoAndPlay("moveRight");
+    }
+    if (keys[37]) {
+        playerAnimations.gotoAndPlay("moveLeft");
+    }
+    eventListener++;
 }
