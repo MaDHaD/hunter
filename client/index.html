@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="http://code.createjs.com/easeljs-0.7.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.0/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+    <script src="/client/core/index.js"></script>
+    <script src="/client/core/player.js"></script>
+    <script src="/client/index.js"></script>
+</head>
+<body onload="init()" style="width: 100%; height: 100%; margin: 0; padding: 0;">
+<div>Om-nom-nom: <span id="eatedGrechka"></span></div>
+<div>Ah-ha-ha-ho: <span id="droppedCats"></span></div>
+<!--<canvas id="gameCanvas" width=1024 height=768 style='width:1024px;height:768px; border: 1px solid black'></canvas>-->
+<div id="canvasWrapper">
+    <canvas width="800px" height="800px" style="border: 1px solid black" id="stageCanvas"></canvas>
+</div>
+</body>
+</html>

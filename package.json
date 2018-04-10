@@ -13,8 +13,12 @@
     "consolidate": "^0.14.5",
     "createjs-easeljs": "^0.8.2",
     "express": "^4.15.2",
+    "lodash": "^4.17.5",
     "mustache": "^2.3.0",
     "node-easel": "^0.1.2",
-    "requirejs": "^2.3.3"
+    "requirejs": "^2.3.3",
+    "socket.io": "^2.1.0",
+    "swig": "^1.4.2",
+    "ws": "^5.1.1"
   }
 }
