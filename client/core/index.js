@@ -19,11 +19,18 @@ class Game {
         this.stage = new Stage(canvas);
     }
 
+    addBackgound() {
+        let background = new createjs.Bitmap('/app/img/Background.jpg');
+        background.scaleX = 2;
+        background.scaleY = 2.7;
+        this.stage.addChildAt(background);
+    }
+
     addPlayer(data) {
         data.player.keys = [];
-        data.player.x = data.x || 10;
+        data.player.x = data.x || 10;пше 
         data.player.y = data.y || 0;
-        this.stage.addChildAt(data.player);
+        this.stage.addChild(data.player);
         this.players[data.id] = data.player;
     }
 
@@ -66,8 +73,6 @@ class Game {
             this.players[playerId].y -= 5;
         }
         if (this.players[playerId].keys[40] && (this.players[playerId].y < (this.bounds.height - 64))) {
-            console.log(playerId)
-
             this.players[playerId].y += 5;
         }
         if (this.players[playerId].keys[39] && (this.players[playerId].x < (this.bounds.width - 64))) {
@@ -80,6 +85,7 @@ class Game {
     }
 
     run(playerId) {
+        this.addBackgound();
         this.stage.update();
         this.ticker.setFPS(60);
         this.ticker.addEventListener("tick", this.handleTick.bind(this, playerId));

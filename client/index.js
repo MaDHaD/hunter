@@ -39,7 +39,6 @@ function init() {
         });
 
         socket.on('movement', function (playerData) {
-            console.log(playerData)
             game.playerMovement(playerData.socketId, playerData.e);
         });
 
@@ -53,6 +52,8 @@ function init() {
     });
 
     
+
+
 
     // socket.on('movement', function (playerData) {
     //     let data = JSON.parse(playerData);
